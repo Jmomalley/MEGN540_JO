@@ -140,7 +140,15 @@ int32_t Encoder_Counts_Right()
     // Note: Interrupts can trigger during a function call and an int32 requires
     // multiple clock cycles to read/save. You may want to stop interrupts, copy the value,
     // and re-enable interrupts to prevent this from corrupting your read/write.
-    return 0;
+
+    cli() ; // stop interrupts per sudocode 
+
+    int32_t tmp_right_count = _right_counts ; 
+
+    sei() ; //enables interrups per sudocode
+    
+    return return tmp_right_count;
+    
 }
 
 /**
@@ -153,7 +161,7 @@ float Encoder_Rad_Left()
     // YOUR CODE HERE.  How many counts per rotation???
     // 2PI Radians per rotation
 
-    return 0;
+    return conv_encoder_rad * _left_counts ; 
 }
 
 /**
@@ -164,7 +172,8 @@ float Encoder_Rad_Right()
 {
     // *** MEGN540 Lab3 ***
     // YOUR CODE HERE.  How many counts per rotation???
-    return 0;
+
+    return conv_encoder_rad * _right_counts ; 
 }
 
 /**
