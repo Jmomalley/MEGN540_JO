@@ -69,6 +69,32 @@ void Initialize_Encoders()
     // the changes in XOR flag. You'll need to see Sections 11.1.2-11.1.4 for setup and use.
     // You'll use the INT6_vect ISR flag.
 
+    // ******* LEFT ENCODER *********
+    PORTE |= ( 1 << PORTE2) ; 
+    PORTB |= (1 << PORTB4) ; 
+
+    // Setting up input pins
+    DDRE &= (1 << DDE2) ; 
+    DDRB &= (1 << DDB4) ;
+
+    PCMSK0 |= (1 << PCINT4) ; // Left side interrupt
+    PCICR |= (1 << PCIE0) ; // Enabling XOR interrupt
+
+    // ********* RIGHT ENCODER ********
+    PORTE |= (1 << PORTE6) ; 
+    PORTF |= (1 << PORTF0) ; 
+
+    // SETTING INPUT PINS
+    DDRE &= (1 << DDE6) ; 
+    DDRF &= (1 << DDF0) ; 
+
+    EICRB |= (1 << ISC60) ; 
+    EIMSK |= (1 << INT6) ; //enabling interrupt pins
+
+    PCIFR |= (1 << PCIF0) ; // clears interrupt flags
+    
+
+    
     // Initialize static file variables. These probably need to be updated.
     _last_right_A = 0;  // MEGN540 Lab 3 TODO
     _last_right_B = 0;  // MEGN540 Lab 3 TODO
