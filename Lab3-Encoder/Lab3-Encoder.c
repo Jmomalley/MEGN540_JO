@@ -97,7 +97,20 @@ int main( void )
     // call initialization stuff
          Initialize_Modules( 0.0 );
     for( ;; ) {
-        // main loop logic
+                Task_USB_Upkeep();
+
+        Task_Run_If_Ready( &task_message_handling );
+        Task_Run_If_Ready( &task_battery_sample );
+        // LAB2
+        Task_Run_If_Ready( &task_time_loop );
+        Task_Run_If_Ready( &task_send_time );
+        // LAB3
+        Task_Run_If_Ready( &task_encoder_read );
+        Task_Run_If_Ready( &task_battery_read );
+
+        Task_Run_If_Ready( &task_restart );
+
+        Task_Run_If_Ready( &task_message_handling_watchdog );
     }
 
     return 0;
