@@ -91,7 +91,7 @@ void Filter_ShiftBy( Filter_Data_t* p_filt, float shift_amount )
 void Filter_SetTo( Filter_Data_t* p_filt, float amount )
 {
         for (uint8_t i = 0; i < (rb_length_F(&p_filt->in_list)); i++) { 
-        rb_set_F(&p_filt->in_list,i,amount); '
+        rb_set_F(&p_filt->in_list,i,amount); 
     }
     for (uint8_t i = 0; i < (rb_length_F(&p_filt->out_list)); i++) { 
         rb_set_F(&p_filt->out_list,i,amount); 

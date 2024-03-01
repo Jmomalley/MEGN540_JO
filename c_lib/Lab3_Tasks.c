@@ -15,6 +15,7 @@ void Send_Encoder( float _time_since_last )
     else
         USB_Send_Msg( "cff", 'e', &encoder, sizeof( encoder ) );
     return;
+}
 
 void Send_Battery( float _time_since_last )
 {

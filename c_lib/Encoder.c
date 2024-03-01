@@ -3,8 +3,9 @@
 /**
  * Internal counters for the Interrupts to increment or decrement as necessary.
  */
-static volatile bool _last_right_A = 0;  // Static limits it's use to this file
-static volatile bool _last_right_B = 0;  // Static limits it's use to this file
+static volatile bool _last_right_A   = 0;  // Static limits it's use to this file
+static volatile bool _last_right_B   = 0;  // Static limits it's use to this file
+static volatile bool _last_right_XOR = 0;  // Copied from the left so that they match
 
 static volatile bool _last_left_A   = 0;  // Static limits it's use to this file
 static volatile bool _last_left_B   = 0;  // Static limits it's use to this file
@@ -70,34 +71,33 @@ void Initialize_Encoders()
     // You'll use the INT6_vect ISR flag.
 
     // ******* LEFT ENCODER *********
-    PORTE |= ( 1 << PORTE2) ; 
-    PORTB |= (1 << PORTB4) ; 
+    PORTE |= ( 1 << PORTE2 );
+    PORTB |= ( 1 << PORTB4 );
 
     // Setting up input pins
-    DDRE &= (1 << DDE2) ; 
-    DDRB &= (1 << DDB4) ;
+    DDRE &= ( 1 << DDE2 );
+    DDRB &= ( 1 << DDB4 );
 
-    PCMSK0 |= (1 << PCINT4) ; // Left side interrupt
-    PCICR |= (1 << PCIE0) ; // Enabling XOR interrupt
+    PCMSK0 |= ( 1 << PCINT4 );  // Left side interrupt
+    PCICR |= ( 1 << PCIE0 );    // Enabling XOR interrupt
 
     // ********* RIGHT ENCODER ********
-    PORTE |= (1 << PORTE6) ; 
-    PORTF |= (1 << PORTF0) ; 
+    PORTE |= ( 1 << PORTE6 );
+    PORTF |= ( 1 << PORTF0 );
 
     // SETTING INPUT PINS
-    DDRE &= (1 << DDE6) ; 
-    DDRF &= (1 << DDF0) ; 
+    DDRE &= ( 1 << DDE6 );
+    DDRF &= ( 1 << DDF0 );
 
-    EICRB |= (1 << ISC60) ; 
-    EIMSK |= (1 << INT6) ; //enabling interrupt pins
+    EICRB |= ( 1 << ISC60 );
+    EIMSK |= ( 1 << INT6 );  // enabling interrupt pins
 
-    PCIFR |= (1 << PCIF0) ; // clears interrupt flags
-    
+    PCIFR |= ( 1 << PCIF0 );  // clears interrupt flags
 
-    
     // Initialize static file variables. These probably need to be updated.
-    _last_right_A = 0;  // MEGN540 Lab 3 TODO
-    _last_right_B = 0;  // MEGN540 Lab 3 TODO
+    _last_right_A   = 0;  // MEGN540 Lab 3 TODO
+    _last_right_B   = 0;  // MEGN540 Lab 3 TODO
+    _last_right_XOR = 0;
 
     _last_left_A   = 0;  // MEGN540 Lab 3 TODO
     _last_left_B   = 0;  // MEGN540 Lab 3 TODO
@@ -119,14 +119,13 @@ int32_t Encoder_Counts_Left()
     // multiple clock cycles to read/save. You may want to stop interrupts, copy the value,
     // and re-enable interrupts to prevent this from corrupting your read/write.
 
+    cli();  // stop interrupts per sudocode
 
-    cli() ; // stop interrupts per sudocode 
+    int32_t tmp_left_count = _left_counts;
 
-    int32_t tmp_left_count = _left_counts ; 
+    sei();  // enables interrups per sudocode
 
-    sei() ; //enables interrups per sudocode
-    
-    return return tmp_left_count;
+    return tmp_left_count;
 }
 
 /**
@@ -141,14 +140,13 @@ int32_t Encoder_Counts_Right()
     // multiple clock cycles to read/save. You may want to stop interrupts, copy the value,
     // and re-enable interrupts to prevent this from corrupting your read/write.
 
-    cli() ; // stop interrupts per sudocode 
+    cli();  // stop interrupts per sudocode
 
-    int32_t tmp_right_count = _right_counts ; 
+    int32_t tmp_right_count = _right_counts;
 
-    sei() ; //enables interrups per sudocode
-    
-    return return tmp_right_count;
-    
+    sei();  // enables interrups per sudocode
+
+    return tmp_right_count;
 }
 
 /**
@@ -161,7 +159,7 @@ float Encoder_Rad_Left()
     // YOUR CODE HERE.  How many counts per rotation???
     // 2PI Radians per rotation
 
-    return conv_encoder_rad * _left_counts ; 
+    return conv_encoder_rad * _left_counts;
 }
 
 /**
@@ -173,7 +171,7 @@ float Encoder_Rad_Right()
     // *** MEGN540 Lab3 ***
     // YOUR CODE HERE.  How many counts per rotation???
 
-    return conv_encoder_rad * _right_counts ; 
+    return conv_encoder_rad * _right_counts;
 }
 
 /**
@@ -182,39 +180,39 @@ float Encoder_Rad_Right()
  * @return
  */
 // Right Encoder
-ISR(INT6_vect)
+ISR( INT6_vect )
 {
-    //Clears the intertupt flag
-    EIFR |= (1 << INTF6) ; 
+    // Clears the intertupt flag
+    EIFR |= ( 1 << INTF6 );
 
-    //This probably needs an if statement to check for PCINT4
+    // This probably needs an if statement to check for PCINT4
 
-    //Calculates the new encoder count and adds it to the current count
-    _right_counts += (Right_A() ^ _last_right_B) - (_last_right_A ^ Right_B()) ; 
+    // Calculates the new encoder count and adds it to the current count
+    _right_counts += ( Right_A() ^ _last_right_B ) - ( _last_right_A ^ Right_B() );
 
     // Get new values for the right encoder
-    _last_right_A = Right_A() ; 
-    _last_right_B = Right_B() ; 
-    _last_right_XOR = right_XOR(); 
+    _last_right_A   = Right_A();
+    _last_right_B   = Right_B();
+    _last_right_XOR = Right_XOR();
 }
 
 /**
  * Interrupt Service Routine for the Left Encoder.
  * @return
  */
-//Left Encoder
-ISR( PCINT0_VECT)
+// Left Encoder
+ISR( PCINT0_vect )
 {
-    //Clears the intertupt flag
-    PCIFR |= (1 << PCIF0) ; 
+    // Clears the intertupt flag
+    PCIFR |= ( 1 << PCIF0 );
 
-    //This probably needs an if statement to check for PCINT4
+    // This probably needs an if statement to check for PCINT4
 
-    //Calculates the new encoder count and adds it to the current count
-    _left_counts += (Left_A() ^ _last_left_B) - (_last_left_A ^ Left_B()) ; 
+    // Calculates the new encoder count and adds it to the current count
+    _left_counts += ( Left_A() ^ _last_left_B ) - ( _last_left_A ^ Left_B() );
 
     // Get new values for the right encoder
-    _last_left_A = Left_A() ; 
-    _last_left_B = Left_B() ; 
-    _last_left_XOR = left_XOR(); 
+    _last_left_A   = Left_A();
+    _last_left_B   = Left_B();
+    _last_left_XOR = Left_XOR();
 }

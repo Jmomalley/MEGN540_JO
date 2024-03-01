@@ -46,86 +46,92 @@ void Task_Message_Handling( float _time_since_last )
 {
     // *** MEGN540  ***
 
-    if( !USB_Msg_Length() ) { // if there is nothing to process...
+    if( !USB_Msg_Length() ) {  // if there is nothing to process...
         return;
     }
 
-    char command = USB_Msg_Peek(); // use Peek to get the operator without removing it so the process keeps going
+    char command = USB_Msg_Peek();  // use Peek to get the operator without removing it so the process keeps going
 
-    switch( command ) { // process operator using a switch statement
+    bool command_processed = false;
+
+    switch( command ) {  // process operator using a switch statement
         case '*':
-            if( USB_Msg_Length() >= _Message_Length( '*' ) ) { // then process your multiplication...
+            if( USB_Msg_Length() >= _Message_Length( '*' ) ) {  // then process your multiplication...
 
                 USB_Msg_Get();  // removes the first character from the received buffer,
                                 // we know it is '*' so it isn't saved as a variable
 
-                struct __attribute__( ( __packed__ ) ) { // makes a struct called data with two floats
+                struct __attribute__( ( __packed__ ) ) {  // makes a struct called data with two floats
                     float v1;
                     float v2;
                 } data;
 
-                USB_Msg_Read_Into( &data, sizeof( data ) ); // copies bytes from usb receive buffer to struct
+                USB_Msg_Read_Into( &data, sizeof( data ) );  // copies bytes from usb receive buffer to struct
 
-                Multiply_And_Send( data.v1, data.v2 ); // does the multiplication, sends the usb message
+                Multiply_And_Send( data.v1, data.v2 );  // does the multiplication, sends the usb message
 
                 // /* MEGN540 -- LAB 2 */ command_processed = true; (future dev)
+                command_processed = true;
             }
             break;
         case '/':
-            if( USB_Msg_Length() >= _Message_Length( '/' ) ) { // then process your divide...
+            if( USB_Msg_Length() >= _Message_Length( '/' ) ) {  // then process your divide...
 
                 USB_Msg_Get();  // removes the first character from the received buffer,
                                 // we know it is '/' so it isn't saved as a variable
 
-                struct __attribute__( ( __packed__ ) ) { // makes a struct called data with two floats
+                struct __attribute__( ( __packed__ ) ) {  // makes a struct called data with two floats
                     float v1;
                     float v2;
                 } data;
 
-                USB_Msg_Read_Into( &data, sizeof( data ) ); // copies bytes from usb receive buffer to struct
+                USB_Msg_Read_Into( &data, sizeof( data ) );  // copies bytes from usb receive buffer to struct
 
-                Divide_And_Send( data.v1, data.v2 ); // does the division, sends the usb message
+                Divide_And_Send( data.v1, data.v2 );  // does the division, sends the usb message
 
                 // /* MEGN540 -- LAB 2 */ command_processed = true; (future dev)
+                command_processed = true;
             }
             break;
         case '+':
-            if( USB_Msg_Length() >= _Message_Length( '+' ) ) { // then process your addition...
+            if( USB_Msg_Length() >= _Message_Length( '+' ) ) {  // then process your addition...
 
                 USB_Msg_Get();  // removes the first character from the received buffer,
                                 // we know it is '+' so it isn't saved as a variable
 
-                struct __attribute__( ( __packed__ ) ) { // makes a struct called data with two floats
+                struct __attribute__( ( __packed__ ) ) {  // makes a struct called data with two floats
                     float v1;
                     float v2;
                 } data;
 
-                USB_Msg_Read_Into( &data, sizeof( data ) ); // copies bytes from usb receive buffer to struct
+                USB_Msg_Read_Into( &data, sizeof( data ) );  // copies bytes from usb receive buffer to struct
 
-                Add_And_Send( data.v1, data.v2 ); // does the addition, sends the usb message
+                Add_And_Send( data.v1, data.v2 );  // does the addition, sends the usb message
 
                 // /* MEGN540 -- LAB 2 */ command_processed = true; (future dev)
+                command_processed = true;
             }
             break;
         case '-':
-            if( USB_Msg_Length() >= _Message_Length( '-' ) ) { // then process your subtraction...
+            if( USB_Msg_Length() >= _Message_Length( '-' ) ) {  // then process your subtraction...
 
                 USB_Msg_Get();  // removes the first character from the received buffer,
                                 // we know it is '-' so it isn't saved as a variable
 
-                struct __attribute__( ( __packed__ ) ) { // makes a struct called data with two floats
+                struct __attribute__( ( __packed__ ) ) {  // makes a struct called data with two floats
                     float v1;
                     float v2;
                 } data;
 
-                USB_Msg_Read_Into( &data, sizeof( data ) ); // copies bytes from usb receive buffer to struct
+                USB_Msg_Read_Into( &data, sizeof( data ) );  // copies bytes from usb receive buffer to struct
 
-                Subtract_And_Send( data.v1, data.v2 ); // does the subtraction, sends the usb message
+                Subtract_And_Send( data.v1, data.v2 );  // does the subtraction, sends the usb message
 
                 // /* MEGN540 -- LAB 2 */ command_processed = true; (future dev)
+                command_processed = true;
             }
             break;
-             case 't':
+        case 't':
             if( USB_Msg_Length() >= _Message_Length( 't' ) ) {
                 // then process your minus...
                 USB_Msg_Get();  // removes the first character from the received buffer,
@@ -200,7 +206,7 @@ void Task_Message_Handling( float _time_since_last )
             }
             command_processed = true;
             break;
-         case 'e':
+        case 'e':
             if( USB_Msg_Length() >= _Message_Length( 'e' ) ) {
                 // then process your minus...
                 USB_Msg_Get();  // removes the first character from the received buffer,
@@ -265,7 +271,7 @@ void Task_Message_Handling( float _time_since_last )
 
                 if( data.run_period > 0 ) {
                     // Turns on this task so that it is run
-                    Task_Activate( &task_battery_read, data.run_period *1e-3);
+                    Task_Activate( &task_battery_read, data.run_period * 1e-3 );
                 } else {
                     Task_Cancel( &task_battery_read );
                 };
@@ -274,30 +280,29 @@ void Task_Message_Handling( float _time_since_last )
             }
             break;
         case '~':
-            if( USB_Msg_Length() >= _Message_Length( '~' ) ) { // then process your reset...
+            if( USB_Msg_Length() >= _Message_Length( '~' ) ) {  // then process your reset...
 
                 // task_restart = true; // Sets the task_restart flag defined in Lab1_Tasks.h
                 USB_Msg_Get();
-                USB_Send_Byte(0);
-                Task_Activate(&task_restart, -1);
-
+                USB_Send_Byte( 0 );
+                Task_Activate( &task_restart, -1 );
 
                 return;
 
                 // /* MEGN540 -- LAB 2 */ command_processed = true; (future dev)
             }
             break;
-        default: // case for unknown command character (unknown operator)
-            USB_Msg_Get(); // clears the unknown operator
-            USB_Send_Byte('?'); // sends a '?'
+        default:                   // case for unknown command character (unknown operator)
+            USB_Msg_Get();         // clears the unknown operator
+            USB_Send_Byte( '?' );  // sends a '?'
             break;
     }
 
     //********* MEGN540 -- LAB 2 ************//
-    // if( command_processed ) {
-    //     // RESET the WATCHDOG TIMER
-    //     Task_Activate( &task_message_handling_watchdog );
-    // }
+    if( command_processed ) {
+        // RESET the WATCHDOG TIMER
+        Task_ReActivate( &task_message_handling_watchdog );
+    }
 }
 
 /**
