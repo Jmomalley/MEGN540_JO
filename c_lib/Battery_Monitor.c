@@ -1,6 +1,8 @@
 #include "Battery_Monitor.h"
+#include "Filter.h"
 
-static const float BITS_TO_BATTERY_VOLTS = 0.0f;
+// Found from documentation
+static const float BITS_TO_BATTERY_VOLTS = 0.0046920821f;
 
 /**
  * Function Initialize_Battery_Monitor initializes the Battery Monitor to record the current battery voltages.
@@ -26,6 +28,17 @@ float Battery_Voltage()
     } data = { .value = 0 };
 
     // *** MEGN540 LAB3 YOUR CODE HERE ***
+    ADCSRA |= ( 1 << ADSC );
 
-    return data.value * BITS_TO_BATTERY_VOLTS;
+    while( !( ADCSRA & ( 1 << ADIF ) ) )
+        ;  // wait for ADC to complete reading
+
+    data.split.LSB = ADCL;        // Read the low bits
+    data.split.MSB = ADCH * 256;  // Read the high bits
+
+    data.value = data.split.LSB + data.split.MSB;
+
+    
+    return 2 * data.value * BITS_TO_BATTERY_VOLTS;
+    
 }

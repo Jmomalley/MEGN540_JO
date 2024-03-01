@@ -29,14 +29,64 @@
 */
 
 // put your includes here for all modules you need to use
+#include "Encoder.h"           
+#include "Message_Handling.h"  
+#include "SerialIO.h"          
+#include "Task_Management.h"   
+#include "Timing.h"            
+ 
+#include "Lab1_Tasks.h"
+#include "Lab2_Tasks.h"
+#include "Lab3_Tasks.h"
 
-// put your task includes and/or function declarations here for future populaion
+
 
 // put your global variables (only if absolutely required) here.
 // Best to identify them as "static" to make them indentified as internal and start with a "_" to identify as internal.
 // Try to initialize them if possible, so their values are never arbitrary.
 
-// put your initialization function here
+void Initialize_Modules( float _time_not_used_ )
+{
+
+         Initialize_USB();
+    // reset USB input buffers
+    USB_Flush_Input_Buffer();
+
+    // Initialize all modules except USB (it can only be called once without messing things up)
+    Initialize_Timing();
+
+    // Intialize Encoders
+    Initialize_Encoders();
+
+    // Initalize Battery Monitor
+    Initialize_Battery_Monitor();
+
+    // Setup task handling
+    Initialize_Task( &task_restart, Initialize_Modules /*function pointer to call*/ );
+
+    // Setup message handling to get processed at some desired rate.
+    Initialize_Task( &task_message_handling, Task_Message_Handling );
+
+    // Setup Loop timer and sending time now
+    Initialize_Task( &task_time_loop, Send_Loop_Time );
+    Initialize_Task( &task_send_time, Send_Time_Now );
+
+    // Setup Encoder Tasks
+    Initialize_Task( &task_encoder_read, Send_Encoder );
+
+    // Setup Battery Reading Tasks
+    Initialize_Task( &task_battery_read, Send_Battery );
+    Initialize_Task( &task_battery_sample, Sample_Battery );
+
+    // Activate relevant tasks
+    Task_Activate( &task_message_handling, 0.0 );
+    Task_Activate( &task_battery_sample, 2 * 1e-3 );
+
+    Initialize_Task( &task_message_handling_watchdog, Task_Message_Handling_Watchdog );
+    Task_Activate( &task_message_handling_watchdog, 100 * 1e-3 );
+}
+
+
 
 /** Main program entry point. This routine configures the hardware required by the application, then
  *  enters a loop to run the application tasks in sequence.
@@ -45,9 +95,22 @@ int main( void )
 {
 
     // call initialization stuff
-
+         Initialize_Modules( 0.0 );
     for( ;; ) {
-        // main loop logic
+                Task_USB_Upkeep();
+
+        Task_Run_If_Ready( &task_message_handling );
+        Task_Run_If_Ready( &task_battery_sample );
+        // LAB2
+        Task_Run_If_Ready( &task_time_loop );
+        Task_Run_If_Ready( &task_send_time );
+        // LAB3
+        Task_Run_If_Ready( &task_encoder_read );
+        Task_Run_If_Ready( &task_battery_read );
+
+        Task_Run_If_Ready( &task_restart );
+
+        Task_Run_If_Ready( &task_message_handling_watchdog );
     }
 
     return 0;
