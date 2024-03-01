@@ -13,33 +13,42 @@ static volatile bool _last_left_XOR = 0;  // Necessary to check if PB4 triggered
 static volatile int32_t _left_counts  = 0;  // Static limits it's use to this file
 static volatile int32_t _right_counts = 0;  // Static limits it's use to this file
 
+// Maybe look for a better value for PI for this conversion
+float conv_encoder_rad = 1 / ( 909.7 / ( 2 * 3.141592654 ) );
+
 /** Helper Funcions for Accessing Bit Information */
 // *** MEGN540 Lab 3 TODO ***
 // Hint, use avr's bit_is_set function to help
 static inline bool Right_XOR()
 {
-    return 0;
+    return bit_is_set( PINE, PINE6 );
 }  // MEGN540 Lab 3 TODO
+
 static inline bool Right_B()
 {
-    return 0;
+    return bit_is_set( PINF, PINF0 );
+
 }  // MEGN540 Lab 3 TODO
+
 static inline bool Right_A()
 {
-    return 0;
+    return Right_XOR() ^ Right_B();
+
 }  // MEGN540 Lab 3 TODO
 
 static inline bool Left_XOR()
 {
-    return 0;
+    return bit_is_set( PINB, PINB4 );
 }  // MEGN540 Lab 3 TODO
+
 static inline bool Left_B()
 {
-    return 0;
+    return bit_is_set( PINE, PINE2 );
 }  // MEGN540 Lab 3 TODO
+
 static inline bool Left_A()
 {
-    return 0;
+    return Left_XOR() ^ Left_B();
 }  // MEGN540 Lab 3 TODO
 
 /**
@@ -108,6 +117,8 @@ float Encoder_Rad_Left()
 {
     // *** MEGN540 Lab3 ***
     // YOUR CODE HERE.  How many counts per rotation???
+    // 2PI Radians per rotation
+
     return 0;
 }
 
