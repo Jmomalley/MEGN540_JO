@@ -47,6 +47,8 @@
 
 void Initialize_Modules( float _time_not_used_ )
 {
+
+         Initialize_USB();
     // reset USB input buffers
     USB_Flush_Input_Buffer();
 
@@ -93,7 +95,7 @@ int main( void )
 {
 
     // call initialization stuff
-
+         Initialize_Modules( 0.0 );
     for( ;; ) {
         // main loop logic
     }
