@@ -181,16 +181,40 @@ float Encoder_Rad_Right()
  * the Pin Change Interrupts can trigger for multiple pins.
  * @return
  */
-// ISR()
-//{
-//
-//}
+// Right Encoder
+ISR(INT6_vect)
+{
+    //Clears the intertupt flag
+    EIFR |= (1 << INTF6) ; 
+
+    //This probably needs an if statement to check for PCINT4
+
+    //Calculates the new encoder count and adds it to the current count
+    _right_counts += (Right_A() ^ _last_right_B) - (_last_right_A ^ Right_B()) ; 
+
+    // Get new values for the right encoder
+    _last_right_A = Right_A() ; 
+    _last_right_B = Right_B() ; 
+    _last_right_XOR = right_XOR(); 
+}
 
 /**
- * Interrupt Service Routine for the right Encoder.
+ * Interrupt Service Routine for the Left Encoder.
  * @return
  */
-// ISR()
-//{
-//
-//}
+//Left Encoder
+ISR( PCINT0_VECT)
+{
+    //Clears the intertupt flag
+    PCIFR |= (1 << PCIF0) ; 
+
+    //This probably needs an if statement to check for PCINT4
+
+    //Calculates the new encoder count and adds it to the current count
+    _left_counts += (Left_A() ^ _last_left_B) - (_last_left_A ^ Left_B()) ; 
+
+    // Get new values for the right encoder
+    _last_left_A = Left_A() ; 
+    _last_left_B = Left_B() ; 
+    _last_left_XOR = left_XOR(); 
+}
