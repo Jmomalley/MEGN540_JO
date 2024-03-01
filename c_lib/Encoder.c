@@ -118,7 +118,15 @@ int32_t Encoder_Counts_Left()
     // Note: Interrupts can trigger during a function call and an int32 requires
     // multiple clock cycles to read/save. You may want to stop interrupts, copy the value,
     // and re-enable interrupts to prevent this from corrupting your read/write.
-    return 0;
+
+
+    cli() ; // stop interrupts per sudocode 
+
+    int32_t tmp_left_count = _left_counts ; 
+
+    sei() ; //enables interrups per sudocode
+    
+    return return tmp_left_count;
 }
 
 /**
