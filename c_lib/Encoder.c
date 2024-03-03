@@ -14,6 +14,7 @@ static volatile bool _last_left_XOR = 0;  // Necessary to check if PB4 triggered
 static volatile int32_t _left_counts  = 0;  // Static limits it's use to this file
 static volatile int32_t _right_counts = 0;  // Static limits it's use to this file
 
+// Converting Encoder counts to Radians
 // Maybe look for a better value for PI for this conversion
 float conv_encoder_rad = 1 / ( 909.7 / ( 2 * 3.141592654 ) );
 
