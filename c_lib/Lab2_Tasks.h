@@ -51,5 +51,5 @@ Task_t task_message_handling_watchdog;  ///<-- LAB 2: Watchdog Timer for Flusing
 // message handeling and the Lab main loops.
 void Send_Loop_Time( float _time_since_last );
 void Send_Time_Now( float _time_since_last );
-
+void Send_Time (char command, uint8_t type, float time) ; 
 #endif  // ifndef LAB2_TASKS_H
