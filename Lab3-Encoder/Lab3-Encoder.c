@@ -78,12 +78,36 @@ void Initialize_Modules( float _time_not_used_ )
     Initialize_Task( &task_battery_read, Send_Battery );
     Initialize_Task( &task_battery_sample, Sample_Battery );
 
+    Initialize_Task( &task_battery_low, Low_Battery) ; 
+
+
+         
+         //Filter Coeffeceints gotten from MATLAB
+         // 500 HZ sample rate. 10hz cuttoff. 4th order, Low pass
+    float b[] = { 0.1329 * 1.0e-04 ,    0.5317 * 1.0e-04 ,    0.7976 * 1.0e-04 ,    0.5317 * 1.0e-04 ,    0.1329 * 1.0e-04 } ; 
+    float a[] = {1.0000   -3.6717    5.0680   -3.1160    0.7199} ; 
+
+    uint8_t filter_order = 4 ; 
+
+         // Initlizes the battery filter
+    Filter_Init( &battery_filt, b, a, filter_order) ; 
+
+         // Shifts the battery filter so that its centered around voltages we care about
+    Filter_ShiftBy( &battery_filt, Battery_Voltage() );
+
+
+         
     // Activate relevant tasks
     Task_Activate( &task_message_handling, 0.0 );
     Task_Activate( &task_battery_sample, 2 * 1e-3 );
 
     Initialize_Task( &task_message_handling_watchdog, Task_Message_Handling_Watchdog );
     Task_Activate( &task_message_handling_watchdog, 100 * 1e-3 );
+
+
+
+         
+         
 }
 
 
@@ -97,7 +121,7 @@ int main( void )
     // call initialization stuff
          Initialize_Modules( 0.0 );
     for( ;; ) {
-                Task_USB_Upkeep();
+        Task_USB_Upkeep();
 
         Task_Run_If_Ready( &task_message_handling );
         Task_Run_If_Ready( &task_battery_sample );
