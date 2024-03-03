@@ -1,23 +1,54 @@
 #include "Lab2_Tasks.h"
 
-void Send_Time_Now( float _time_since_last ){
+// Put your lab-specific task functionality and data_structures (if necessary) here so it is accessable to both
+// message handeling and the Lab main loops.
+void Send_Loop_Time( float _time_since_last )
+{
 
-    Send_Time('T', 0, Timing_Get_Time_Sec());
+    static bool isIdle  = true;
+    static float period = 0;
+
+    if( isIdle ) {
+        period = task_time_loop.run_period;
+
+        task_time_loop.run_period = 0;
+
+        isIdle = false;
+
+    } else {
+
+        struct __attribute__( ( __packed__ ) ) {
+            uint8_t time_char;
+            float time_loop;
+        } data;
+
+        data.time_loop = _time_since_last;
+
+        data.time_char = 1;
+        if( period < 0 )
+            USB_Send_Msg( "cBf", 't', &data, sizeof( data ) );
+        else
+            USB_Send_Msg( "cBf", 'T', &data, sizeof( data ) );
+
+        task_time_loop.run_period = period;
+        isIdle                    = true;
+    }
+
+    return;
 }
 
-void Send_Loop_Time( float _time_since_last ){
+void Send_Time_Now( float _time_since_last )
+{
 
-    Send_Time('T', 1, loop_time);
-}
-
-void Send_Time(char command, uint8_t type, float time){
     struct __attribute__( ( __packed__ ) ) {
-        uint8_t type;
-        float time;
+        uint8_t time_char;
+        float time_now;
     } data;
 
-    data.time = type;
-    data.type = type;
-
-    USB_Send_Msg("ccf", command, &data, sizeof(data));
-}
+    data.time_now  = Timing_Get_Time_Sec();
+    data.time_char = 0;
+    if( task_send_time.run_period > 0 )
+        USB_Send_Msg( "cBf", 'T', &data, sizeof( data ) );
+    else
+        USB_Send_Msg( "cBf", 't', &data, sizeof( data ) );
+};
