@@ -30,6 +30,8 @@
 
 #include "../c_lib/Timing.h"
 
+#include "led_interface.h"
+
 /** These define the internal counters that will be updated in the ISR to keep track of the time
  *  The volatile keyword is because they are changing in an ISR, the static means they are not
  *  visible (not global) outside of this file.
@@ -50,31 +52,46 @@ static volatile uint32_t _count_ms = 0;
  */
 void Initialize_Timing()
 {
-    // *** MEGN540 Lab 2 ***
-    // YOUR CODE HERE
-    // Enable timing, setup prescalers, etc.
+
+    TCCR0A |= ( 1 << WGM01 );  // Set Timer0 in CTC mode per table 13-3
+
+    TCCR0B |= ( 1 << CS01 ) | ( 1 << CS00 );
+    // TCCR0B |= ( 1 << CS00 );  // Sets the prescaler to 64 from Table 13-8
+
+    OCR0A = 249;
+
+    TIMSK0 |= ( 1 << OCIE0A );  // Enable the CTC rollover ISR
+
+    TCNT0 = 0;  // Clears counts back to 0
 
     _count_ms = 0;
+
+    // morse_dash( 300 );
+    // morse_dash( 300 );
+    // morse_dash( 300 );
+
+    sei();
 }
 
 /**
- * This function gets the current time and returns it in a Time_t structure.
+ * This function gets the current time and returns seconds.
  * @return
  */
 float Timing_Get_Time_Sec()
 {
-    // *** MEGN540 Lab 2 ***
-    // YOUR CODE HERE
-    return 0;
+    float _seconds;
+
+    Time_t time = Timing_Get_Time();
+
+    _seconds = time.millisec * 1e-3 + time.microsec * 1e-6;
+
+    return _seconds;
 }
 Time_t Timing_Get_Time()
 {
     // *** MEGN540 Lab 2 ***
-    // YOUR CODE HERE
-    Time_t time = {
-        .millisec = _count_ms,
-        .microsec = 0  // YOU NEED TO REPLACE THIS WITH A CALL TO THE TIMER0 REGISTER AND MULTIPLY APPROPRIATELY
-    };
+    Time_t time = { .millisec = _count_ms, .microsec = TCNT0 << 1 };
+    // YOU NEED TO REPLACE THIS WITH A CALL TO THE TIMER0 REGISTER AND MULTIPLY APPROPRIATELY
 
     return time;
 }
@@ -90,9 +107,10 @@ uint32_t Timing_Get_Milli()
 }
 uint16_t Timing_Get_Micro()
 {
-    // *** MEGN540 Lab 2 ***
+    uint16_t _count_micro = TCNT0 << 1;  // Pulls the register value and multiples by 4
+    // uint16_t _count_micro = TCNT0 * 4;  // Pulls the register value and multiples by 4
     // YOUR CODE HERE
-    return 0;  // YOU NEED TO REPLACE THIS WITH A CALL TO THE TIMER0 REGISTER AND MULTIPLY APPROPRIATELY
+    return _count_micro;  // YOU NEED TO REPLACE THIS WITH A CALL TO THE TIMER0 REGISTER AND MULTIPLY APPROPRIATELY
 }
 
 /**
@@ -102,22 +120,30 @@ uint16_t Timing_Get_Micro()
  */
 float Timing_Seconds_Since( const Time_t* time_start_p )
 {
+
+    Time_t time_current = Timing_Get_Time();
+
     // *** MEGN540 Lab 2 ***
     // YOUR CODE HERE
-    float delta_time = 0;
+    float delta_time = ( time_current.millisec - time_start_p->millisec ) * 1e-3 + ( time_current.microsec - time_start_p->microsec ) * 1e-6;
     return delta_time;
 }
 
 /** This is the Interrupt Service Routine for the Timer0 Compare A feature.
  * You'll need to set the compare flags properly for it to work.
  */
-/*ISR( DEFINE THE COMPARISON TRIGGER )
+ISR( TIMER0_COMPA_vect )
 {
+    TCNT0 = 0;  // reset the counter needed since the counter will go to 255 regarless
     // *** MEGN540 Lab 2 ***
     // YOUR CODE HERE
     // YOU NEED TO RESET THE Timer0 Value to 0 again!
-
+    // morse_dot( 200 );
+    /*if( _count_ms % 2000 == 0 )  // Should blink the LED every 1 second
+    {
+        morse_dot( 200 );
+    }
+    */
     // take care of upticks of both our internal and external variables.
-    _count_ms ++;
-
-}*/
+    _count_ms++;
+}
