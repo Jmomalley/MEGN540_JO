@@ -22,6 +22,8 @@ void Task_Activate( Task_t* task, float run_period )
     // Here you should change the state of the is_active member and set the time to now (lab 2)
     task->is_active = true; // set the task to active
     task->run_period = run_period; // add the run period as prescribed
+
+     task->time_last_ran = Timing_Get_Time();
 }
 
 /**
@@ -35,6 +37,8 @@ void Task_ReActivate( Task_t* task )
     //****** MEGN540 --  START IN LAB 1, UPDATE IN Lab 2 ******//
     // Here you should change the state of the is_active member and set the time to now (lab 2)
     task->is_active = true; // resets the task state to active
+
+    task->time_last_ran = Timing_Get_Time();
 }
 
 /** Function Task_Cancel changes the internal state to disable the task **/
@@ -52,7 +56,16 @@ bool Task_Is_Ready( Task_t* task )
 {
     //****** MEGN540 --  START IN LAB 1, UPDATE IN Lab 2 ******//
     // Note a run_period of 0 indicates the task should be run every time if it is active.
-    return task->is_active; // returns whether the task is active or not
+    // Checks if the task is active and has not yet reached its run period 
+    if( task->is_active &&
+        task->run_period <=
+            Timing_Seconds_Since( &( task->time_last_ran ) ) )  // Checks that the task is active and run time is larger than the last run time for task
+    {
+        return true;
+    }
+
+    // Note a run_period of 0 indicates the task should be run every time if it is active.
+    return false;  // MEGN540 Update to set the return statement based on is_active and time_last_ran.
 
 }
 
@@ -69,15 +82,15 @@ void Task_Run( Task_t* task )
     // Update time_last_ran and is_active as appropriate.
     // Note that a negative run_period indicates the task should only be performed once, while
     // a run_period of 0 indicates the task should be run every time if it is active.
-    task->task_fcn_ptr(0);
-    if(task->task_fcn_ptr < 0){
-        Task_Cancel(task);
+    if( task->task_fcn_ptr != 0 ) {
+        // task->is_active = true;
+        task->task_fcn_ptr( Timing_Seconds_Since( &task->time_last_ran ) );  // Does this need to be different?
+        // task->task_fcn_ptr( 100 );
     }
-    else {
-        task->time_last_ran.microsec = 0;
-        task->time_last_ran.millisec = 0;
-        task->is_active = true;
+    if( task->run_period < 0 ) {
+        Task_Cancel( task );
     }
+    task->time_last_ran = Timing_Get_Time();
 }
 
 /** Function Task_Run_If_Ready Function Task_Run_If_Ready checks to see if the given task is ready for execution, executes the task,
