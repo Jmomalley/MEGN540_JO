@@ -1,5 +1,15 @@
 #include "Lab3_Tasks.h"
 
+//Stores the min voltage that the batteries can be without warning
+//This includes a %10 increase to ensure that the battery voltage doesn't go below the minimum voltage of the car
+float min_voltage = 3.6 + 0.4 ; 
+
+//Setting this to be initally higher that the min voltage as to not trip the warning immediately
+static float = temp_bat_voltage = 4 ; 
+
+// Stores weather the battery voltage has been low
+static bool isLow = false; 
+
 void Send_Encoder( float _time_since_last )
 {
     struct __attribute__( ( __packed__ ) ) {
@@ -36,7 +46,33 @@ void Send_Battery( float _time_since_last )
 void Sample_Battery( float _time_since_last )
 {
 
-    Filter_Value( &battery_filt, 2.0f );
+    temp_bat_voltage = Filter_Value( &battery_filt, Battery_Voltage() );
+
+    if( ( temp_bat_voltage < min_voltage ) && !isLow ) {
+        isLow = true;
+        Task_Activate( &task_battery_low, 1 );  // Turn on the BAT LOW warning every second with the voltage
+    }
+    return;
+}
+
+void Low_Battery( float _time_since_last){
+
+    // The data that needs to be sent for the warning
+    struct __attribute__( ( __packed__ ) ) {
+        char message[7]; //Message
+        float voltage; //Voltage
+    } data = { .message = { 'B', 'A', 'T', ' ', 'L', 'O', 'W' }, .voltage = Filter_Last_Output( &battery_filt ) };
+
+    // Send Warning 
+    USB_Send_Msg( "c7sf", '!', &data, sizeof( data ) );
+
+    // Checks if the voltage is low or near the 
+    if( ( bat_volt_sample > ( min_voltage ) ) && isLow ) {
+        isLow = false; //Reseting for next pass through
+        Task_Cancel( &task_battery_low ); //Cancels the task so that it doesn't run continuously 
+    }
 
     return;
+
+
 }
