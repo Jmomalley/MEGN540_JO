@@ -243,7 +243,77 @@ void Task_Message_Handling( float _time_since_last )
             }
             command_processed = true;
             break;
+        case 'e':
+            if( USB_Msg_Length() >= _Message_Length( 'e' ) ) {
+                // then process your minus...
+                USB_Msg_Get();  // removes the first character from the received buffer,
+                                // we already know it was a * so no need to save it as a
+                                // variable
 
+                Task_Activate( &task_encoder_read, -1 );
+                // Build a meaningful structure to put your data in. Here we want two
+                // floats.
+
+                command_processed = true;
+            }
+            break;
+        case 'E':
+            if( USB_Msg_Length() >= _Message_Length( 'E' ) ) {
+
+                // then process your minus...
+                USB_Msg_Get();  // removes the first character from the received buffer,
+                                // we already know it was a * so no need to save it as a
+                                // variable
+
+                struct __attribute__( ( __packed__ ) ) {
+                    float run_period;
+                } data;
+
+                USB_Msg_Read_Into( &data, sizeof( data ) );
+
+                if( data.run_period > 0 ) {
+                    // Turns on this task so that it is run
+                    Task_Activate( &task_encoder_read, data.run_period * 1e-3 );
+                } else {
+                    Task_Cancel( &task_encoder_read );
+                };
+            }
+            command_processed = true;
+            break;
+        case 'b':
+            if( USB_Msg_Length() >= _Message_Length( 'b' ) ) {
+                // then process your minus...
+                USB_Msg_Get();  // removes the first character from the received buffer,
+                                // we already know it was a * so no need to save it as a
+                                // variable
+
+                Task_Activate( &task_battery_read, -1 );
+
+                command_processed = true;
+            }
+            break;
+        case 'B':
+            if( USB_Msg_Length() >= _Message_Length( 'B' ) ) {
+                // then process your minus...
+                USB_Msg_Get();  // removes the first character from the received buffer,
+                // we already know it was a * so no need to save it as a
+                // variable
+                struct __attribute__( ( __packed__ ) ) {
+                    float run_period;
+                } data;
+
+                USB_Msg_Read_Into( &data, sizeof( data ) );
+
+                if( data.run_period > 0 ) {
+                    // Turns on this task so that it is run
+                    Task_Activate( &task_battery_read, data.run_period * 1e-3 );
+                } else {
+                    Task_Cancel( &task_battery_read );
+                };
+
+                command_processed = true;
+            }
+            break;
         case '~':
             if( USB_Msg_Length() >= _Message_Length( '~' ) ) {
                 // then process your reset by setting the task_restart flag defined in Lab1_Tasks.h
@@ -252,7 +322,7 @@ void Task_Message_Handling( float _time_since_last )
                 command_processed = true;
                 // Blink 3 time and reset buffers.
                 for( int i = 0; i < 3; i++ ) {
-                    morse_dot( 150 );
+                    morse_dot( 300 );
                 }
             }
             break;
