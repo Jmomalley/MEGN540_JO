@@ -35,16 +35,27 @@
 #ifndef LAB3_TASKS_H
 #define LAB3_TASKS_H
 
+#include "SerialIO.h"  // USB interface for sending results back to user
 #include "Task_Management.h"
-
 // Include your lab-specific headers here
-// e.g. #include "SerialIO.h"  // necessary for sending arithmatic results back to user
+#include "Battery_Monitor.h"  //Battery Header
+#include "Encoder.h"          // Encoder Header
+//#include "Filter.h"           //Filter stuff
 
 // Put your lab-specific tasks here
 // e.g. Task_t task_restart;  ///<-- Lab 1: This flag indicates that the device received a restart command from the hoast. Default inactive.
+Task_t task_encoder_read;    ///<-- Lab 3:
+Task_t task_battery_read;    //<Lab 3 battery read task
+Task_t task_battery_sample;  // Task to sample battery volage
+Task_t task_battery_low;     // Triggers when the battery is low
+
+Filter_Data_t battery_filt;  // The battery filter
 
 // Put your lab-specific task functionality and data_structures (if necessary) here so it is accessable to both
 // message handeling and the Lab main loops.
-// e.g. void Send_Time_Now( float _time_since_last );
+void Send_Encoder( float _time_since_last );
+void Send_Battery( float _time_since_last );
+void Sample_Battery( float _time_since_last );
+void Low_Battery( float _time_since_last );
 
 #endif  // ifndef LAB3_TASKS_H
