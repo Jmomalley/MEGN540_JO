@@ -30,6 +30,8 @@
 
 #include "Filter.h"
 
+#include <stdio.h>  ///REMOVE WHEN DEBUG OVER
+
 /**
  * Function Filter_Init initializes the filter given two float arrays and the order of the filter.  Note that the
  * size of the array will be one larger than the order. (First order systems have two coefficients).
@@ -47,8 +49,22 @@
  * @param denominator_coeffs The denominator coefficients (A/alpha traditionally)
  * @param order The filter order
  */
+
+// could I make the var order STATIC somehow? or is that dangerous?
 void Filter_Init( Filter_Data_t* p_filt, float* numerator_coeffs, float* denominator_coeffs, uint8_t order )
 {
+    rb_initialize_F( &( p_filt->numerator ) );    // Initialize the numerator buffer
+    rb_initialize_F( &( p_filt->denominator ) );  // Initialize the denominator buffer
+    rb_initialize_F( &( p_filt->out_list ) );     // Initialize the out_list buffer the output values (smooth)
+    rb_initialize_F( &( p_filt->in_list ) );      // Initialize the in_list buffer to raw input values (raw)
+
+    for( uint8_t i = 0; i < ( order + 1 ); i++ ) {
+        rb_push_back_F( &( p_filt->numerator ), *( numerator_coeffs + i ) );
+        rb_push_back_F( &( p_filt->denominator ), *( denominator_coeffs + i ) );
+    }
+
+    Filter_SetTo( p_filt, 0 );
+
     return;
 }
 
@@ -60,6 +76,14 @@ void Filter_Init( Filter_Data_t* p_filt, float* numerator_coeffs, float* denomin
  */
 void Filter_ShiftBy( Filter_Data_t* p_filt, float shift_amount )
 {
+
+    uint8_t f_order = rb_length_F( &( p_filt->in_list ) );
+
+    for( uint8_t i = 0; i <= f_order; i++ ) {
+        rb_set_F( &( p_filt->in_list ), i, ( rb_get_F( &( p_filt->in_list ), i ) + shift_amount ) );
+        rb_set_F( &( p_filt->out_list ), i, ( rb_get_F( &( p_filt->out_list ), i ) + shift_amount ) );
+    }
+
     return;
 }
 
@@ -71,6 +95,13 @@ void Filter_ShiftBy( Filter_Data_t* p_filt, float shift_amount )
  */
 void Filter_SetTo( Filter_Data_t* p_filt, float amount )
 {
+    uint8_t f_order = rb_length_F( &( p_filt->numerator ) ) - 1;
+
+    for( uint8_t i = 0; i <= f_order; i++ ) {
+        rb_push_front_F( &( p_filt->out_list ), amount );
+        rb_push_front_F( &( p_filt->in_list ), amount );
+    }
+
     return;
 }
 
@@ -82,7 +113,30 @@ void Filter_SetTo( Filter_Data_t* p_filt, float amount )
  */
 float Filter_Value( Filter_Data_t* p_filt, float value )
 {
-    return 0;
+
+    uint8_t f_len = rb_length_F( &( p_filt->numerator ) );  // number of coefficients
+
+    float Y = 0.0;  // Output for the system initilzed to zero
+
+    rb_push_front_F( &( p_filt->in_list ), value );
+
+    uint8_t k = 1;
+
+    for( uint8_t i = 0; i < f_len; i++ ) {
+
+        Y = Y + ( rb_get_F( &( p_filt->numerator ), i ) * rb_get_F( &( p_filt->in_list ), i ) ) /
+                    rb_get_F( &( p_filt->denominator ), 0 );  // should I assume A_0 is always 1??
+
+        if( k < f_len ) {
+
+            Y = Y - ( rb_get_F( &( p_filt->denominator ), k ) * rb_get_F( &( p_filt->out_list ), i ) ) / rb_get_F( &( p_filt->denominator ), 0 );
+        }
+        k++;
+    }
+
+    rb_push_front_F( &( p_filt->out_list ), Y );  // Add the new filtered value to the output list
+
+    return Y;
 }
 
 /**
@@ -91,5 +145,6 @@ float Filter_Value( Filter_Data_t* p_filt, float value )
  */
 float Filter_Last_Output( Filter_Data_t* p_filt )
 {
-    return 0;
+
+    return rb_get_F( &( p_filt->out_list ), 0 );
 }
