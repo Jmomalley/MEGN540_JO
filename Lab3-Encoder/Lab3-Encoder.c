@@ -87,11 +87,9 @@ void Initialize_Modules( float _time_not_used_ )
 
     // Setup Battery Filter
     // 4th order butterworth sample at 500 hz with cutoff at 20hz and 6 sigfig
-    float num[] = { 0.089848614640000, 0.359394458600000, 0.539091687800000, 0.359394458600000, 0.089848614640000 };
-    for( uint8_t i = 0; i < 5; i++ ) {
-        num[i] = num[i] * 1e-5;
-    };
-    float den[] = { 1.000000000000000, -3.835825541000000, 5.520819137000000, -3.533535219000000, 0.848555999300000 };
+    float num[] = { 0.1329 *1e-5,    0.5317*1e-5,    0.7976*1e-5,    0.5317*1e-5,    0.1329*1e-5 };
+
+    float den[] = {  1.0000,   -3.6717,    5.0680,   -3.1160,    0.7199};
 
     // float num[]          = { 1, 1, 1, 1 };
     // float den[]          = { 4, 0, 0, 0 };
