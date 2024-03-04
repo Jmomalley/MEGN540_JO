@@ -1,57 +1,57 @@
-#include "Battery_Monitor.h"
+/*
+         MEGN540 Mechatronics Lab
+    Copyright (C) Andrew Petruska, 2021.
+       apetruska [at] mines [dot] edu
+          www.mechanical.mines.edu
+*/
 
-#include "led_interface.h"
+/*
+    Copyright (c) 2021 Andrew Petruska at Colorado School of Mines
 
-static const float BITS_TO_BATTERY_VOLTS = 0.0050048876f;  // ((ADC * V_ref )/ (2^10 - 1))*2
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+*/
+
+/**
+ * Battery_Monitor.h/c defines the functions necessary to read the on-board battery voltage for the Pololu Zumo 32U4 car.
+ * For information regarding A/D conversion please consult Section 24 of the atmega32U4 datasheet
+ * https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-7766-8-bit-AVR-ATmega16U4-32U4_Datasheet.pdf
+ *
+ * The battery voltage is divided by 2 before being connected to ADC6 (PF6).
+ *
+ */
+#ifndef _LAB3_BATTERY_MONITOR_H
+#define _LAB3_BATTERY_MONITOR_H
+
+#include "Filter.h"
+#include <avr/io.h>  // For pin input/output access
+
+#include <ctype.h>  // For int32_t type
 
 /**
  * Function Initialize_Battery_Monitor initializes the Battery Monitor to record the current battery voltages.
  */
-void Initialize_Battery_Monitor()
-{
-
-    // PORTF |= ( 1 << PORTF6 );  // PF6
-
-    // DDRF &= ( 1 << DDE6 );  // INPUT
-
-    ADCSRA |= ( 1 << ADEN );  // Enable the ADC
-
-    ADCSRA |= ( 1 << ADPS2 ) | ( 1 << ADPS1 ) | ( 1 << ADPS0 );  // Set the prescaler to 128
-
-    ADMUX |= ( 1 << MUX1 ) | ( 1 << MUX2 );  // Select ADC6 which is connected to PF6
-
-    ADCSRB &= ( 0 << MUX5 );
-
-    ADMUX |= ( 1 << REFS0 ) | ( 1 << REFS1 );  // Sets the Reference Voltage to 2.56V
-
-    // ADMUX |= ( 1 << REFS0 );
-
-    DIDR0 |= ( 1 << ADC6D );  // Disable digital inputs on ADC6
-}
+void Initialize_Battery_Monitor();
 
 /**
  * Function Battery_Voltage initiates the A/D measurement and returns the result for the battery voltage.
  */
-float Battery_Voltage()
-{
-    // A Union to assist with reading the LSB and MSB in the  16 bit register
-    union {
-        struct {
-            uint8_t LSB;
-            uint8_t MSB;
-        } split;
-        uint16_t value;
-    } data = { .value = 0 };
+float Battery_Voltage();
 
-    // *** MEGN540 LAB3 YOUR CODE HERE ***
-    ADCSRA |= ( 1 << ADSC );  // Start the ADC measurement
-
-    while( !( ADCSRA & ( 1 << ADIF ) ) ) {};  // wait for ADC to complete reading
-
-    data.split.LSB = ADCL;  // Read the low bits
-    data.split.MSB = ADCH;  // Read the high bits
-
-    // ADCSRA |= ( 1 << ADIF );
-
-    return data.value * BITS_TO_BATTERY_VOLTS;
-}
+#endif
