@@ -21,10 +21,11 @@ void Send_Loop_Time( float _time_since_last )
 
         struct __attribute__( ( __packed__ ) ) {
             uint8_t time_char;
-            float time_now;
+            float time_loop;
         } data;
 
-        data.time_now  = _time_since_last;
+        data.time_loop = _time_since_last;
+
         data.time_char = 1;
         if( period < 0 )
             USB_Send_Msg( "cBf", 't', &data, sizeof( data ) );
