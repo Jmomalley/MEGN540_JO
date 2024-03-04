@@ -32,6 +32,7 @@
 #include "SerialIO.h"          // for USB communication
 #include "Task_Management.h"   // for clean task management with functors
 #include "Timing.h"            // for Time understanding
+#include "led_interface.h"     //
 
 // Include Lab Sepcific Functionality
 #include "Lab1_Tasks.h"
@@ -66,7 +67,15 @@ void Initialize_Modules( float _time_not_used_ )
     // Setup message handling to get processed at some desired rate.
     Initialize_Task( &task_message_handling, Task_Message_Handling );
 
-    // Initialize_Task( &task_message_handling_watchdog, /*watchdog timout period*/,  Task_Message_Handling_Watchdog );
+    // Setup Loop timer and sending time now
+    Initialize_Task( &task_time_loop, Send_Loop_Time );
+    Initialize_Task( &task_send_time, Send_Time_Now );
+
+    // Activate relevant tasks
+    Task_Activate( &task_message_handling, 0.0 );
+
+    Initialize_Task( &task_message_handling_watchdog, Task_Message_Handling_Watchdog );
+    Task_Activate( &task_message_handling_watchdog, 100 * 1e-3 );
 }
 
 /** Main program entry point. This routine configures the hardware required by the application, then
@@ -77,12 +86,20 @@ int main( void )
     Initialize_USB();
     Initialize_Modules( 0.0 );
 
+    for( uint8_t i = 0; i < 6; i++ ) {
+        morse_dot( 100 );  // blink to make sure load correctly
+    }
+
     for( ;; ) {  // yet another way to do while (true)
+
         Task_USB_Upkeep();
 
         Task_Run_If_Ready( &task_message_handling );
+        Task_Run_If_Ready( &task_time_loop );
+        Task_Run_If_Ready( &task_send_time );
+
         Task_Run_If_Ready( &task_restart );
 
-        // Task_Run_If_Ready( &task_message_handling_watchdog );
+        Task_Run_If_Ready( &task_message_handling_watchdog );
     }
 }
