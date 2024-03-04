@@ -1,108 +1,61 @@
-#include "Task_Management.h"
+/*
+         MEGN540 Mechatronics Lab
+    Copyright (C) Andrew Petruska, 2021.
+       apetruska [at] mines [dot] edu
+          www.mechanical.mines.edu
+*/
 
-#include "Timing.h"
+/*
+    Copyright (c) 2021 Andrew Petruska at Colorado School of Mines
 
-/** Function Initialize_Task initializes the task to a default state that is inactive.
- *  Note that a negative run_period indicates the task should only be performed once, while
- *  a run_period of 0 indicates the task should be run every time.
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+*/
+
+/*
+ * This file defines the incomming message length and other details.
  */
-void Initialize_Task( Task_t* task, void ( *task_fcn_ptr )( float ) )
-{
-    task->is_active              = false;
-    task->run_period             = -1;
-    task->time_last_ran.microsec = 0;
-    task->time_last_ran.millisec = 0;
-    task->task_fcn_ptr           = task_fcn_ptr;
-}
 
-/** Function Task_Activate changes the internal state to enable the task **/
-void Task_Activate( Task_t* task, float run_period )
-{
-    // TODO Lab 2: Set time to now.
-    task->is_active  = true;        // Starts the Task
-    task->run_period = run_period;  // Run time in seconds
+#ifndef MESAGE_HANDELING_H
+#define MESAGE_HANDELING_H
 
-    task->time_last_ran = Timing_Get_Time();
-}
+// Include realted interfaces
+#include "SerialIO.h"
+
+// Include Lab Specific Task Definitions
+#include "Lab1_Tasks.h"
+#include "Lab2_Tasks.h"
+#include "Lab3_Tasks.h"
+#include "Lab4_Tasks.h"
+#include "Lab5_Tasks.h"
 
 /**
- * @brief Function Task_ReActivate sets the state of is_active to true and resets the time last ran to the current time.
- * This has the same functionality as Task_Activate but it does not allow changing the tasks's run period.
- *
- * @param task is a pointer to the task object of interest
+ * Function Task_Message_Handling processes USB messages as necessary and sets status flags to control the flow of the program.
  */
-void Task_ReActivate( Task_t* task )
-{
-    // TODO Lab 2: Set time last ran to current time.
-    task->is_active = true;
-
-    task->time_last_ran = Timing_Get_Time();
-}
-
-/** Function Task_Cancel changes the internal state to disable the task **/
-void Task_Cancel( Task_t* task )
-{
-    task->is_active = false;
-}
-
-/** Function Task_Is_Ready indicates if the task should be run. It checks both
- * the active status and the timing.
- */
-bool Task_Is_Ready( Task_t* task )
-{
-
-    if( task->is_active &&
-        task->run_period <=
-            Timing_Seconds_Since( &( task->time_last_ran ) ) )  // Checks that the task is active and run time is larger than the last run time for task
-    {
-        return true;
-    }
-
-    // Note a run_period of 0 indicates the task should be run every time if it is active.
-    return false;  // MEGN540 Update to set the return statement based on is_active and time_last_ran.
-}
+void Task_Message_Handling( float _time_since_last );
 
 /**
- * @brief Function Task_Run runs the task-function (if not NULL) and updates the time last ran to the current time. If the run_period is -1, this also
- * deactivates the task.
+ * @brief Function Task_Message_Handling_Watchdog clears the USB recieve (deleting all messages) to flush the buffer if a complete message is not recieved
+ * whithin an appropriate amount of time (say 250ms)
  *
- * @param task pointer to the task object of interest
+ * @param _unused_
  */
-void Task_Run( Task_t* task )
-{
+void Task_Message_Handling_Watchdog( float _unused_ );
 
-    // If the function pointer is not NULL (0), run task.
-    // To call a void functor (function pointer):  functor_variable();
-    // Update time_last_ran and is_active as appropriate.
-    // Note that a negative run_period indicates the task should only be performed once, while
-    // a run_period of 0 indicates the task should be run every time if it is active.
-
-    if( task->task_fcn_ptr != 0 ) {
-        // task->is_active = true;
-        task->task_fcn_ptr( Timing_Seconds_Since( &task->time_last_ran ) );  // Does this need to be different?
-        // task->task_fcn_ptr( 100 );
-    }
-    if( task->run_period < 0 ) {
-        Task_Cancel( task );
-    }
-    task->time_last_ran = Timing_Get_Time();
-}
-
-/** Function Task_Run_If_Ready Function Task_Run_If_Ready checks to see if the given task is ready for execution, executes the task,
- *  and resets the time_last_ran appropriately. If the task function pointer is NULL then it just
- *  returns if the task is ready and resets the time_last_ran.
- */
-bool Task_Run_If_Ready( Task_t* task )
-{
-    //****** MEGN540 --  START IN LAB 1, UPDATE IN Lab 2   ******//
-    // use the prior functions to help with this.
-    // Check to see if the task is ready to run.
-    // Run it if it is ready
-
-    if( Task_Is_Ready( task ) ) {
-        Task_Run( task );
-        return true;
-    }
-
-    return false;  // true if it ran, false if it did not run
-}
+#endif
